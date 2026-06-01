@@ -1,0 +1,316 @@
+{% extends "evaluator/base.html" %}
+{% block title %}Bosh Sahifa — Bólmede{% endblock %}
+{% block extra_head %}
+<style>
+.hero {
+  min-height: 88vh;
+  display: flex; align-items: center;
+  position: relative; overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  overflow: hidden;
+}
+.orb {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: 0.15;
+  animation: float 8s ease-in-out infinite;
+}
+.orb-1 { width: 500px; height: 500px; background: var(--accent2); top: -200px; right: -100px; animation-delay: 0s; }
+.orb-2 { width: 350px; height: 350px; background: var(--accent); bottom: -100px; left: -80px; animation-delay: 3s; }
+.orb-3 { width: 250px; height: 250px; background: var(--accent3); top: 40%; left: 40%; animation-delay: 1.5s; }
+@keyframes float {
+  0%,100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-30px) scale(1.05); }
+}
+
+/* Particle dots */
+.particles { position: absolute; inset: 0; }
+.particle {
+  position: absolute; width: 3px; height: 3px;
+  background: var(--accent); border-radius: 50%;
+  animation: particle-float linear infinite;
+  opacity: 0;
+}
+@keyframes particle-float {
+  0% { opacity:0; transform: translateY(0); }
+  10% { opacity:0.6; }
+  90% { opacity:0.3; }
+  100% { opacity:0; transform: translateY(-120px); }
+}
+
+.hero-content { position: relative; z-index: 2; max-width: 750px; }
+.hero-tag {
+  display: inline-flex; align-items: center; gap: 8px;
+  background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.15);
+  border-radius: 100px; padding: 6px 16px;
+  font-size: 0.82rem; color: var(--accent); font-weight: 500;
+  margin-bottom: 2rem;
+  animation: fadeInUp 0.6s ease both;
+}
+.hero-tag::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: blink 1.5s ease infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+.hero h1 {
+  font-size: clamp(2.8rem, 6vw, 5rem);
+  font-weight: 800; line-height: 1.05;
+  letter-spacing: -0.03em;
+  animation: fadeInUp 0.6s 0.1s ease both;
+}
+.hero h1 em {
+  font-style: normal;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.hero p {
+  font-size: 1.15rem; color: var(--text-muted); line-height: 1.7;
+  margin: 1.5rem 0 2.5rem;
+  animation: fadeInUp 0.6s 0.2s ease both;
+}
+.hero-actions {
+  display: flex; gap: 1rem; flex-wrap: wrap;
+  animation: fadeInUp 0.6s 0.3s ease both;
+}
+@keyframes fadeInUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+
+/* STATS BAR */
+.stats-bar {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 2rem;
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  animation: fadeInUp 0.6s 0.4s ease both;
+}
+.stat-item { text-align: center; padding: 1rem; }
+.stat-item + .stat-item { border-left: 1px solid var(--glass-border); }
+.stat-num {
+  font-family: 'Syne', sans-serif; font-size: 2rem; font-weight: 800;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  display: block;
+  counter-reset: none;
+}
+.stat-desc { font-size: 0.82rem; color: var(--text-muted); margin-top: 4px; }
+
+/* RECENT SECTION */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 2rem;
+}
+.section-title {
+  font-family: 'Syne', sans-serif; font-size: 1.6rem; font-weight: 700;
+}
+.section-title span { color: var(--accent); }
+
+.result-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 20px;
+  text-decoration: none; color: inherit;
+  display: block;
+  transition: all 0.3s;
+  position: relative; overflow: hidden;
+}
+.result-card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  opacity: 0; transition: opacity 0.3s;
+}
+.result-card:hover { border-color: rgba(0,229,255,0.2); transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.3); }
+.result-card:hover::before { opacity: 1; }
+.result-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+.result-name { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.05rem; }
+.result-date { font-size: 0.78rem; color: var(--text-muted); }
+.result-meta { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+.result-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.result-stat-item { background: rgba(255,255,255,0.03); border-radius: 8px; padding: 8px; text-align: center; }
+.result-stat-val { font-weight: 700; font-size: 1rem; color: var(--accent); }
+.result-stat-lbl { font-size: 0.7rem; color: var(--text-muted); }
+.score-pill {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  border-radius: 100px; padding: 4px 12px;
+  font-weight: 700; font-size: 0.9rem; color: #fff;
+}
+
+/* EMPTY STATE */
+.empty-state {
+  text-align: center; padding: 4rem 2rem;
+  color: var(--text-muted);
+}
+.empty-state .emoji { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { margin-bottom: 1.5rem; }
+
+/* FEATURES */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+.feature-item {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: var(--radius); padding: 28px;
+  transition: all 0.3s;
+}
+.feature-item:hover { border-color: rgba(124,77,255,0.3); transform: translateY(-3px); }
+.feature-icon {
+  width: 52px; height: 52px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; margin-bottom: 1rem;
+}
+.fi-1 { background: rgba(0,229,255,0.12); }
+.fi-2 { background: rgba(124,77,255,0.12); }
+.fi-3 { background: rgba(255,107,53,0.12); }
+.feature-item h3 { font-size: 1.1rem; margin-bottom: 8px; }
+.feature-item p { font-size: 0.88rem; color: var(--text-muted); line-height: 1.6; }
+
+@media(max-width:768px) {
+  .stats-bar { grid-template-columns: repeat(2,1fr); }
+  .stat-item + .stat-item { border-left: none; }
+  .feature-grid { grid-template-columns: 1fr; }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="particles" id="particles"></div>
+  </div>
+  <div class="container">
+    <div class="hero-content">
+      <div class="hero-tag">⚡ AI tahlili bilan</div>
+      <h1>Adam háreketiniń<br/><em>dawamlılıǵın</em><br/>bahalaw</h1>
+      <p>Sun'iy intellekt yordamida sportchi harakatlarini ilmiy asosda baholang, tahlil qiling va natijalaringizni kuzating.</p>
+      <div class="hero-actions">
+        <a href="{% url 'baholash_qoshish' %}" class="btn btn-primary">⚡ Baholashni boshlash</a>
+        <a href="{% url 'natijalar_royxati' %}" class="btn btn-outline">📊 Natijalarni ko'rish</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="container" style="margin-top: -2rem; padding-bottom: 2rem;">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <span class="stat-num" data-count="{{ statistika.jami }}">{{ statistika.jami }}</span>
+      <div class="stat-desc">Jami baholashlar</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">{{ statistika.o_rtacha_baho|floatformat:1 }}</span>
+      <div class="stat-desc">O'rtacha baho</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">{{ statistika.o_rtacha_davomiylik|floatformat:0 }}</span>
+      <div class="stat-desc">O'rtacha daqiqa</div>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num">{{ statistika.eng_yaxshi_baho|floatformat:0 }}</span>
+      <div class="stat-desc">Eng yuqori baho</div>
+    </div>
+  </div>
+</div>
+
+<!-- RECENT RESULTS -->
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-title">So'nggi <span>natijalar</span></h2>
+      <a href="{% url 'natijalar_royxati' %}" class="btn btn-outline" style="padding: 8px 18px; font-size: 0.85rem;">Barchasini ko'rish →</a>
+    </div>
+
+    {% if so_nggi %}
+    <div class="grid-3">
+      {% for obj in so_nggi %}
+      <a href="{% url 'natija_korinishi' obj.pk %}" class="result-card">
+        <div class="result-card-top">
+          <div>
+            <div class="result-name">{{ obj.ism }} {{ obj.familiya }}</div>
+            <div class="result-date">{{ obj.sana|date:"d.m.Y H:i" }}</div>
+          </div>
+          {% if obj.baho %}<div class="score-pill">{{ obj.baho|floatformat:0 }}</div>{% endif %}
+        </div>
+        <div class="result-meta">
+          <span class="badge badge-accent">{{ obj.get_harakat_turi_display }}</span>
+          <span class="badge badge-purple">{{ obj.get_daraja_display }}</span>
+        </div>
+        <div class="result-stats">
+          <div class="result-stat-item">
+            <div class="result-stat-val">{{ obj.davomiylik_daqiqa|floatformat:0 }}'</div>
+            <div class="result-stat-lbl">Daqiqa</div>
+          </div>
+          <div class="result-stat-item">
+            <div class="result-stat-val">{{ obj.masofа_km|floatformat:1 }}</div>
+            <div class="result-stat-lbl">Km</div>
+          </div>
+          <div class="result-stat-item">
+            <div class="result-stat-val">{{ obj.yurak_urishi }}</div>
+            <div class="result-stat-lbl">BPM</div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <div class="emoji">🏃</div>
+      <p>Hali natijalar yo'q. Birinchi baholashni boshlang!</p>
+      <a href="{% url 'baholash_qoshish' %}" class="btn btn-primary">Baholashni boshlash</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" style="padding-top: 0;">
+  <div class="container">
+    <h2 class="section-title text-center" style="margin-bottom: 2.5rem;">Tizim <span>imkoniyatlari</span></h2>
+    <div class="feature-grid">
+      <div class="feature-item">
+        <div class="feature-icon fi-1">🤖</div>
+        <h3>AI tahlili</h3>
+        <p>Qwen AI yordamida harakat ma'lumotlarini chuqur tahlil qilish va shaxsiy tavsiyalar olish.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon fi-2">📈</div>
+        <h3>Kuzatib borish</h3>
+        <p>Barcha natijalarni saqlash va dinamikani kuzatish orqali progress monitoring.</p>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon fi-3">📊</div>
+        <h3>Statistika</h3>
+        <p>Turli harakat turlari va darajalari bo'yicha batafsil statistik tahlil.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+// Particles
+const container = document.getElementById('particles');
+for (let i = 0; i < 25; i++) {
+  const p = document.createElement('div');
+  p.className = 'particle';
+  p.style.cssText = `
+    left: ${Math.random() * 100}%;
+    bottom: ${Math.random() * 30}%;
+    animation-duration: ${4 + Math.random() * 6}s;
+    animation-delay: ${Math.random() * 8}s;
+    width: ${2 + Math.random() * 3}px;
+    height: ${2 + Math.random() * 3}px;
+    opacity: 0;
+  `;
+  container.appendChild(p);
+}
+// Counter animation
+document.querySelectorAll('.stat-num[data-count]').forEach(el => {
+  const target = parseInt(el.dataset.count);
+  let current = 0;
+  const inc = Math.ceil(target / 40);
+  const timer = setInterval(() => {
+    current = Math.min(current + inc, target);
+    el.textContent = current;
+    if (current >= target) clearInterval(timer);
+  }, 40);
+});
+</script>
+{% endblock %}

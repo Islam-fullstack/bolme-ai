@@ -1,0 +1,265 @@
+{% extends "evaluator/base.html" %}
+{% block title %}Yangi Baholash — Bólmede{% endblock %}
+{% block extra_head %}
+<style>
+.form-page { padding: 3rem 0 6rem; }
+.form-page-header { margin-bottom: 3rem; }
+.form-page-header h1 { font-size: 2.2rem; margin-bottom: 0.5rem; }
+.form-page-header h1 em { font-style:normal; color: var(--accent); }
+.form-page-header p { color: var(--text-muted); }
+
+.form-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 24px; padding: 2.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.form-section-title {
+  font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1rem;
+  color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase;
+  margin: 2rem 0 1.5rem;
+  display: flex; align-items: center; gap: 10px;
+}
+.form-section-title::before {
+  content: ''; height: 1px; width: 24px;
+  background: var(--glass-border);
+}
+.form-section-title:first-child { margin-top: 0; }
+
+.form-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.2rem; margin-bottom: 1.2rem; }
+.form-row.three { grid-template-columns: repeat(3, 1fr); }
+.form-row.single { grid-template-columns: 1fr; }
+
+.form-group { display: flex; flex-direction: column; gap: 8px; }
+.form-label {
+  font-size: 0.85rem; font-weight: 500; color: var(--text-muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.form-input, .form-select, .form-textarea {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px; padding: 12px 16px;
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  width: 100%;
+  appearance: none;
+}
+.form-input::placeholder, .form-textarea::placeholder { color: rgba(255,255,255,0.2); }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,229,255,0.08);
+  background: rgba(0,229,255,0.04);
+}
+.form-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237986cb' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 40px; cursor: pointer;
+}
+.form-select option { background: #1a1f2e; color: var(--text); }
+.form-error { font-size: 0.8rem; color: var(--danger); display: flex; align-items: center; gap: 4px; }
+
+.submit-area {
+  margin-top: 2.5rem; padding-top: 2rem;
+  border-top: 1px solid var(--glass-border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1rem;
+}
+.submit-note { font-size: 0.82rem; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.btn-submit {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff; border: none; border-radius: 14px;
+  padding: 14px 32px; font-family: 'Syne', sans-serif;
+  font-weight: 700; font-size: 1rem; cursor: pointer;
+  display: flex; align-items: center; gap: 10px;
+  transition: all 0.2s; position: relative; overflow: hidden;
+}
+.btn-submit::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(135deg, transparent, rgba(255,255,255,0.08));
+  opacity: 0; transition: opacity 0.2s;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(124,77,255,0.4); }
+.btn-submit:hover::after { opacity: 1; }
+.btn-submit.loading { pointer-events: none; }
+.btn-submit .spinner {
+  width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: #fff; border-radius: 50%; display: none;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.btn-submit.loading .spinner { display: block; }
+.btn-submit.loading .btn-text { opacity: 0.7; }
+
+/* Preview card */
+.preview-sidebar { position: sticky; top: 90px; }
+.preview-card {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 20px; padding: 1.5rem;
+  opacity: 0.6; transition: opacity 0.3s;
+}
+.preview-card.active { opacity: 1; }
+.preview-card h3 { font-size: 1rem; margin-bottom: 1rem; color: var(--text-muted); }
+.preview-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--glass-border); font-size: 0.85rem; }
+.preview-item:last-child { border-bottom: none; }
+.preview-key { color: var(--text-muted); }
+.preview-val { font-weight: 600; color: var(--text); }
+
+.ai-badge {
+  background: rgba(124,77,255,0.1); border: 1px solid rgba(124,77,255,0.2);
+  border-radius: 12px; padding: 12px 16px; margin-top: 1rem;
+  font-size: 0.82rem; color: #b39ddb; display: flex; gap: 8px;
+  align-items: flex-start;
+}
+
+@media(max-width:768px) {
+  .form-row, .form-row.three { grid-template-columns: 1fr; }
+  .layout-form { flex-direction: column; }
+  .form-card { padding: 1.5rem; }
+}
+</style>
+{% endblock %}
+{% block content %}
+<div class="container form-page">
+  <div class="form-page-header">
+    <h1>Yangi <em>baholash</em></h1>
+    <p>Ma'lumotlarni kiriting va AI tahlilini oling</p>
+  </div>
+
+  <div class="flex gap-6 layout-form" style="align-items: flex-start;">
+    <!-- FORM -->
+    <div style="flex: 1; min-width: 0;">
+      <form method="post" id="mainForm">
+        {% csrf_token %}
+        <div class="form-card">
+          <div class="form-section-title">👤 Shaxsiy ma'lumotlar</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.ism.label }}</label>
+              {{ form.ism }}
+              {% if form.ism.errors %}<div class="form-error">⚠ {{ form.ism.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.familiya.label }}</label>
+              {{ form.familiya }}
+              {% if form.familiya.errors %}<div class="form-error">⚠ {{ form.familiya.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-row" style="grid-template-columns: 1fr 2fr;">
+            <div class="form-group">
+              <label class="form-label">{{ form.yosh.label }}</label>
+              {{ form.yosh }}
+              {% if form.yosh.errors %}<div class="form-error">⚠ {{ form.yosh.errors.0 }}</div>{% endif %}
+            </div>
+            <div></div>
+          </div>
+
+          <div class="form-section-title">🏃 Harakat ma'lumotlari</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">{{ form.harakat_turi.label }}</label>
+              {{ form.harakat_turi }}
+              {% if form.harakat_turi.errors %}<div class="form-error">⚠ {{ form.harakat_turi.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">{{ form.daraja.label }}</label>
+              {{ form.daraja }}
+              {% if form.daraja.errors %}<div class="form-error">⚠ {{ form.daraja.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+          <div class="form-row three">
+            <div class="form-group">
+              <label class="form-label">⏱ {{ form.davomiylik_daqiqa.label }}</label>
+              {{ form.davomiylik_daqiqa }}
+              {% if form.davomiylik_daqiqa.errors %}<div class="form-error">⚠ {{ form.davomiylik_daqiqa.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">📍 {{ form.masofа_km.label }}</label>
+              {{ form.masofа_km }}
+              {% if form.masofа_km.errors %}<div class="form-error">⚠ {{ form.masofа_km.errors.0 }}</div>{% endif %}
+            </div>
+            <div class="form-group">
+              <label class="form-label">❤️ {{ form.yurak_urishi.label }}</label>
+              {{ form.yurak_urishi }}
+              {% if form.yurak_urishi.errors %}<div class="form-error">⚠ {{ form.yurak_urishi.errors.0 }}</div>{% endif %}
+            </div>
+          </div>
+
+          <div class="form-section-title">📝 Qo'shimcha</div>
+          <div class="form-row single">
+            <div class="form-group">
+              <label class="form-label">{{ form.izoh.label }}</label>
+              {{ form.izoh }}
+            </div>
+          </div>
+        </div>
+
+        <div class="submit-area">
+          <div class="submit-note">🤖 AI tahlili avtomatik bajariladi</div>
+          <button type="submit" class="btn-submit" id="submitBtn">
+            <div class="spinner"></div>
+            <span class="btn-text">⚡ Baholashni yuborish</span>
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- PREVIEW SIDEBAR -->
+    <div style="width: 280px; flex-shrink: 0;" class="preview-sidebar">
+      <div class="preview-card" id="previewCard">
+        <h3>📋 Ko'rinish</h3>
+        <div class="preview-item"><span class="preview-key">Ism</span><span class="preview-val" id="pvIsm">—</span></div>
+        <div class="preview-item"><span class="preview-key">Yosh</span><span class="preview-val" id="pvYosh">—</span></div>
+        <div class="preview-item"><span class="preview-key">Harakat</span><span class="preview-val" id="pvHarakat">—</span></div>
+        <div class="preview-item"><span class="preview-key">Daraja</span><span class="preview-val" id="pvDaraja">—</span></div>
+        <div class="preview-item"><span class="preview-key">Davomiylik</span><span class="preview-val" id="pvDavomiylik">—</span></div>
+        <div class="preview-item"><span class="preview-key">Masofa</span><span class="preview-val" id="pvMasofa">—</span></div>
+      </div>
+      <div class="ai-badge">
+        🤖 Barcha ma'lumotlar Qwen AI orqali tahlil qilinadi va 0-100 ball beriladi.
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const fields = {
+  pvIsm: ['id_ism', 'id_familiya'],
+  pvYosh: ['id_yosh'],
+  pvHarakat: ['id_harakat_turi'],
+  pvDaraja: ['id_daraja'],
+  pvDavomiylik: ['id_davomiylik_daqiqa'],
+  pvMasofa: ['id_masofа_km'],
+};
+
+function update() {
+  const card = document.getElementById('previewCard');
+  let hasData = false;
+  const ism = document.getElementById('id_ism')?.value || '';
+  const fam = document.getElementById('id_familiya')?.value || '';
+  document.getElementById('pvIsm').textContent = (ism || fam) ? `${ism} ${fam}`.trim() : '—';
+  document.getElementById('pvYosh').textContent = document.getElementById('id_yosh')?.value || '—';
+  const harakatEl = document.getElementById('id_harakat_turi');
+  document.getElementById('pvHarakat').textContent = harakatEl?.options[harakatEl.selectedIndex]?.text || '—';
+  const darajaEl = document.getElementById('id_daraja');
+  document.getElementById('pvDaraja').textContent = darajaEl?.options[darajaEl.selectedIndex]?.text || '—';
+  const dav = document.getElementById('id_davomiylik_daqiqa')?.value;
+  document.getElementById('pvDavomiylik').textContent = dav ? dav + ' daqiqa' : '—';
+  const mas = document.getElementById('id_masofа_km')?.value;
+  document.getElementById('pvMasofa').textContent = mas ? mas + ' km' : '—';
+  hasData = !!ism;
+  card.classList.toggle('active', hasData);
+}
+
+document.querySelectorAll('.form-input, .form-select, .form-textarea').forEach(el => {
+  el.addEventListener('input', update);
+  el.addEventListener('change', update);
+});
+
+document.getElementById('mainForm').addEventListener('submit', function() {
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  document.querySelector('.btn-text').textContent = 'Tahlil qilinmoqda...';
+});
+</script>
+{% endblock %}

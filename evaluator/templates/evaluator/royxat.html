@@ -1,0 +1,156 @@
+{% extends "evaluator/base.html" %}
+{% block title %}Natijalar Ro'yxati — Bólmede{% endblock %}
+{% block extra_head %}
+<style>
+.list-page { padding: 3rem 0 6rem; }
+.page-header { margin-bottom: 2.5rem; }
+.page-header h1 { font-size: 2rem; margin-bottom: 0.4rem; }
+.page-header h1 span { color: var(--accent); }
+
+.filters-bar {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 14px; padding: 1.2rem 1.5rem;
+  display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+.filter-label { font-size: 0.82rem; color: var(--text-muted); font-weight: 500; }
+.filter-select {
+  background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+  border-radius: 10px; padding: 8px 14px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+  appearance: none; cursor: pointer; min-width: 160px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%237986cb' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+.filter-select option { background: #1a1f2e; }
+.filter-select:focus { outline: none; border-color: var(--accent); }
+.filter-btn {
+  background: linear-gradient(135deg, var(--accent2), var(--accent));
+  color: #fff; border: none; border-radius: 10px;
+  padding: 9px 20px; font-family: 'DM Sans', sans-serif;
+  font-weight: 600; font-size: 0.88rem; cursor: pointer;
+}
+.filter-clear { color: var(--text-muted); font-size: 0.82rem; text-decoration: none; }
+.filter-clear:hover { color: var(--accent); }
+
+.results-count { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1rem; }
+.results-count span { color: var(--text); font-weight: 600; }
+
+.list-table {
+  width: 100%; border-collapse: collapse; font-size: 0.9rem;
+}
+.list-table thead th {
+  text-align: left; padding: 12px 16px;
+  font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-muted); font-weight: 600;
+  border-bottom: 1px solid var(--glass-border);
+}
+.list-table tbody tr {
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  transition: background 0.2s;
+  animation: fadeIn 0.4s ease both;
+}
+@keyframes fadeIn { from { opacity:0; transform: translateX(-8px); } to { opacity:1; transform: translateX(0); } }
+.list-table tbody tr:hover { background: rgba(255,255,255,0.03); }
+.list-table td { padding: 14px 16px; vertical-align: middle; }
+.td-name { font-weight: 600; }
+.td-name a { color: var(--text); text-decoration: none; }
+.td-name a:hover { color: var(--accent); }
+.score-cell {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 50%;
+  font-weight: 800; font-size: 0.9rem;
+  font-family: 'Syne', sans-serif;
+}
+.score-high { background: rgba(0,230,118,0.12); color: var(--success); border: 1px solid rgba(0,230,118,0.2); }
+.score-mid { background: rgba(255,171,64,0.12); color: var(--warning); border: 1px solid rgba(255,171,64,0.2); }
+.score-low { background: rgba(255,82,82,0.12); color: var(--danger); border: 1px solid rgba(255,82,82,0.2); }
+
+.table-container {
+  background: var(--glass); border: 1px solid var(--glass-border);
+  border-radius: 20px; overflow: hidden;
+}
+.empty-state { padding: 4rem; text-align: center; color: var(--text-muted); }
+.empty-state .emoji { font-size: 3rem; display: block; margin-bottom: 1rem; }
+</style>
+{% endblock %}
+{% block content %}
+<div class="container list-page">
+  <div class="page-header">
+    <h1>Natijalar <span>ro'yxati</span></h1>
+    <p class="text-muted">Barcha baholash natijalari</p>
+  </div>
+
+  <!-- FILTERS -->
+  <form method="get" class="filters-bar">
+    <span class="filter-label">🔍 Filter:</span>
+    <select name="tur" class="filter-select">
+      <option value="">Barcha harakatlar</option>
+      {% for val, label in harakat_turlari %}
+      <option value="{{ val }}" {% if joriy_tur == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <select name="daraja" class="filter-select">
+      <option value="">Barcha darajalar</option>
+      {% for val, label in darajalar %}
+      <option value="{{ val }}" {% if joriy_daraja == val %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="filter-btn">Qidirish</button>
+    {% if joriy_tur or joriy_daraja %}
+    <a href="{% url 'natijalar_royxati' %}" class="filter-clear">✕ Tozalash</a>
+    {% endif %}
+  </form>
+
+  <div class="results-count">Topildi: <span>{{ natijalar.count }}</span> ta natija</div>
+
+  {% if natijalar %}
+  <div class="table-container">
+    <table class="list-table">
+      <thead>
+        <tr>
+          <th>Ism Familiya</th>
+          <th>Yosh</th>
+          <th>Harakat</th>
+          <th>Daraja</th>
+          <th>Davomiylik</th>
+          <th>Masofa</th>
+          <th>BPM</th>
+          <th>Baho</th>
+          <th>Sana</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for obj in natijalar %}
+        <tr style="animation-delay: {{ forloop.counter0 }}0ms;">
+          <td class="td-name"><a href="{% url 'natija_korinishi' obj.pk %}">{{ obj.ism }} {{ obj.familiya }}</a></td>
+          <td>{{ obj.yosh }}</td>
+          <td><span class="badge badge-accent">{{ obj.get_harakat_turi_display }}</span></td>
+          <td><span class="badge badge-purple">{{ obj.get_daraja_display }}</span></td>
+          <td>{{ obj.davomiylik_daqiqa|floatformat:0 }}'</td>
+          <td>{{ obj.masofа_km|floatformat:1 }} km</td>
+          <td>{{ obj.yurak_urishi }}</td>
+          <td>
+            {% if obj.baho %}
+            <div class="score-cell {% if obj.baho >= 70 %}score-high{% elif obj.baho >= 45 %}score-mid{% else %}score-low{% endif %}">
+              {{ obj.baho|floatformat:0 }}
+            </div>
+            {% else %}—{% endif %}
+          </td>
+          <td class="text-muted text-sm">{{ obj.sana|date:"d.m.Y" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="table-container">
+    <div class="empty-state">
+      <span class="emoji">🏃</span>
+      <p>Hali natijalar yo'q</p>
+      <a href="{% url 'baholash_qoshish' %}" class="btn btn-primary" style="margin-top: 1rem;">Birinchi baholash</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
